@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Search, 
   Plus, 
   Check, 
   Sparkles, 
@@ -10,10 +9,10 @@ import {
   Award, 
   Leaf, 
   Flame, 
-  X,
-  UtensilsCrossed,
-  Barcode,
-  ExternalLink
+  X, 
+  UtensilsCrossed, 
+  Barcode, 
+  ExternalLink 
 } from 'lucide-react';
 import { MealItem, DietaryGoal, CartItem, MealCustomizationOption } from '../types';
 import { HEALTHY_MEALS } from '../data/mockData';
@@ -25,7 +24,6 @@ interface MealOrderingProps {
 
 export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuickLogMeal }) => {
   const [mealsList, setMealsList] = useState<MealItem[]>(HEALTHY_MEALS);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<DietaryGoal>('all');
   const [customizingMeal, setCustomizingMeal] = useState<MealItem | null>(null);
   
@@ -48,20 +46,9 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
 
   const filteredMeals = useMemo(() => {
     return mealsList.filter(meal => {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = 
-        meal.name.toLowerCase().includes(q) ||
-        meal.hawkerStallOrBrand.toLowerCase().includes(q) ||
-        meal.location.toLowerCase().includes(q) ||
-        meal.description.toLowerCase().includes(q) ||
-        (meal.barcode && meal.barcode.includes(q)) ||
-        (meal.brand && meal.brand.toLowerCase().includes(q));
-
-      const matchesGoal = selectedGoal === 'all' || meal.tags.includes(selectedGoal);
-
-      return matchesSearch && matchesGoal;
+      return selectedGoal === 'all' || meal.tags.includes(selectedGoal);
     });
-  }, [mealsList, searchQuery, selectedGoal]);
+  }, [mealsList, selectedGoal]);
 
   const handleOpenCustomize = (meal: MealItem) => {
     setCustomizingMeal(meal);
@@ -200,41 +187,18 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
 
         <button
           onClick={() => {
-            setSearchQuery('737628064502');
+            const noodleMeal = mealsList.find(m => m.barcode === '737628064502');
+            if (noodleMeal) handleOpenCustomize(noodleMeal);
           }}
           className="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto flex-shrink-0"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Filter to Noodle Kit</span>
+          <span>Customize Noodle Kit</span>
         </button>
       </div>
 
-      {/* Search and Interactive Filter Controls */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes (Lei Cha, Chicken Rice, YTF), barcode (737628064502), or location..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition"
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Segmented Dietary Filter Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+      {/* Segmented Dietary Filter Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
           {filterTabs.map(tab => {
             const isActive = selectedGoal === tab.id;
             return (
@@ -252,7 +216,6 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
             );
           })}
         </div>
-      </div>
 
       {/* Food Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -415,13 +378,12 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
       {filteredMeals.length === 0 && (
         <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
           <UtensilsCrossed className="w-10 h-10 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-800">No dishes match your filter</h3>
+          <h3 className="text-lg font-bold text-slate-800">No dishes match this dietary goal</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Try clearing your search query or selecting "All Healthy Eats" to see all HPB-approved Singapore dishes.
+            Try selecting "All Healthy Eats" to view all HPB-approved Singapore dishes and Open Food Facts items.
           </p>
           <button
             onClick={() => {
-              setSearchQuery('');
               setSelectedGoal('all');
             }}
             className="px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 transition"
