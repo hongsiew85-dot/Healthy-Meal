@@ -1,0 +1,6 @@
+{
+  "name": "NutriActive SG",
+  "description": "Singapore's integrated platform for HPB-certified healthy meal delivery, AI macro camera scanner, and ActiveSG facility sports booking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
