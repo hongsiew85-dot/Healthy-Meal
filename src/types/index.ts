@@ -158,7 +158,7 @@ export interface ChatMessage {
   };
 }
 
-export type SubscriptionTier = 'free' | 'pro' | 'elite';
+export type SubscriptionTier = 'free' | 'pro' | 'club' | 'elite';
 export type BillingCycle = 'monthly' | 'annual';
 
 export interface SubscriptionPlan {

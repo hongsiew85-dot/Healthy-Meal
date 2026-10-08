@@ -170,7 +170,7 @@ export default function App() {
       location: booking.venueName,
     };
 
-    const multiplier = subscription.tier === 'elite' ? 3 : subscription.tier === 'pro' ? 2 : 1;
+    const multiplier = (subscription.tier === 'club' || subscription.tier === 'elite') ? 3 : subscription.tier === 'pro' ? 2 : 1;
     setLoggedActivities(prev => [newActivity, ...prev]);
     setHealthpoints(prev => prev + 50 * multiplier);
     showToast(`ActiveSG booking confirmed! Burn of ~${booking.estimatedCalorieBurn} kcal synced (+${50 * multiplier} pts).`);
@@ -374,7 +374,7 @@ export default function App() {
                 onClick={() => setIsSubscriptionModalOpen(true)}
                 className="text-amber-800 font-bold hover:text-amber-950 transition cursor-pointer flex items-center gap-1"
               >
-                <span>NutriPass (S$9.90/mo)</span>
+                <span>NutriPass (S$89/mo)</span>
               </button>
             </div>
           </div>

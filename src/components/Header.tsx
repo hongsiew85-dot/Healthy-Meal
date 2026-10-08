@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>
                 {subscription.tier !== 'free' 
                   ? `${subscription.tier.toUpperCase()} Member · S$0 Delivery` 
-                  : 'NutriPass Pro (S$9.90/mo): S$0 Delivery'}
+                  : 'NutriPass Pro (S$89/mo): S$0 Delivery'}
               </span>
             </button>
 
@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="text-left hidden sm:block">
                 <div className="text-[9px] uppercase font-bold text-slate-500 leading-none">Subscription</div>
                 <div className="text-xs font-black text-slate-900 leading-tight">
-                  {subscription.tier !== 'free' ? `${subscription.tier.toUpperCase()} Pass` : 'NutriPass S$9.90'}
+                  {subscription.tier !== 'free' ? `${subscription.tier.toUpperCase()} Pass` : 'NutriPass S$89'}
                 </div>
               </div>
               <span className="sm:hidden text-xs">

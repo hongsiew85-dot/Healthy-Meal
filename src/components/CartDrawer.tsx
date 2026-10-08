@@ -56,7 +56,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const isSubscriber = subscription.tier !== 'free' || subscribeAtCheckout;
   const subscriberMealDiscount = isSubscriber ? subtotal * 0.10 : 0;
   const deliveryFee = deliveryType === 'activesg_pickup' || isSubscriber ? 0 : subtotal >= 30 ? 0 : 3.50;
-  const subscriptionAddonFee = subscribeAtCheckout ? 9.90 : 0;
+  const subscriptionAddonFee = subscribeAtCheckout ? 89.00 : 0;
   const promoDiscount = promoApplied ? 3.00 : 0;
   const finalTotal = Math.max(0, subtotal + deliveryFee + subscriptionAddonFee - promoDiscount - subscriberMealDiscount);
   const totalCalories = cart.reduce((acc, item) => acc + (item.meal.nutrition.calories * item.quantity), 0);
@@ -81,7 +81,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         status: 'active',
         startDate: new Date().toISOString().split('T')[0],
         renewalDate: renewal.toISOString().split('T')[0],
-        feeSgd: 9.90,
+        feeSgd: 89.00,
         savingsTotalSgd: subscription.savingsTotalSgd + 3.50 + subscriberMealDiscount,
         autoRenew: true,
       });
@@ -147,7 +147,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               {subscribeAtCheckout && (
                 <div className="text-[11px] text-amber-800 font-bold pt-1 border-t border-emerald-200/60 flex items-center justify-center gap-1">
                   <Crown className="w-3.5 h-3.5 text-amber-600" />
-                  <span>NutriPass Pro Activated (S$9.90/mo)! S$0 delivery forever.</span>
+                  <span>NutriPass Pro Activated (S$89/mo)! S$0 delivery forever.</span>
                 </div>
               )}
             </div>
@@ -364,7 +364,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-slate-900">NutriPass Pro Membership</span>
                         <span className="text-[10px] font-extrabold bg-emerald-700 text-white px-1.5 py-0.2 rounded">
-                          S$9.90/mo
+                          S$89/mo
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-600 mt-0.5">
@@ -382,7 +382,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
                 <div className="mt-2 text-[11px] font-bold text-emerald-800 flex items-center justify-between pt-2 border-t border-emerald-200/50">
                   <label htmlFor="subscribe-checkout-opt" className="cursor-pointer">
-                    {subscribeAtCheckout ? '✓ NutriPass Pro Subscription Fee included' : '+ Add S$9.90/mo subscription to order'}
+                    {subscribeAtCheckout ? '✓ NutriPass Pro Subscription Fee included' : '+ Add S$89/mo subscription to order'}
                   </label>
                   <button
                     type="button"
@@ -436,7 +436,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <Crown className="w-3.5 h-3.5 text-amber-600" />
                     <span>NutriPass Pro Subscription Fee</span>
                   </span>
-                  <span>+S$9.90</span>
+                  <span>+S$89.00</span>
                 </div>
               )}
 

@@ -71,8 +71,8 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === selectedTier);
       const fee = billingCycle === 'annual' 
-        ? (plan?.priceAnnualMonthly || 7.90) * 12 
-        : (plan?.priceMonthly || 9.90);
+        ? (plan?.priceAnnualMonthly || (selectedTier === 'club' ? 800 : 69)) * 12 
+        : (plan?.priceMonthly || (selectedTier === 'club' ? 1000 : 89));
 
       const renewal = new Date();
       if (billingCycle === 'annual') {
@@ -88,7 +88,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         startDate: new Date().toISOString().split('T')[0],
         renewalDate: renewal.toISOString().split('T')[0],
         feeSgd: fee,
-        savingsTotalSgd: currentSubscription.savingsTotalSgd + 15.50,
+        savingsTotalSgd: currentSubscription.savingsTotalSgd + 45.00,
         autoRenew: true,
       });
 
@@ -101,7 +101,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         });
       } catch (e) {}
 
-      onToast(`Welcome to ${plan?.name}! S$0 Free delivery and 10% meal discount now active.`);
+      onToast(`Welcome to ${plan?.name}! S$0 Free delivery and subscriber perks now active.`);
       onClose();
     }, 600);
   };
@@ -124,11 +124,11 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg sm:text-xl font-black tracking-tight">NutriPass SG Membership</h2>
                   <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
-                    Save up to S$65/mo
+                    Pro S$89/mo · Teams S$1,000/mo
                   </span>
                 </div>
                 <p className="text-xs text-emerald-200 mt-0.5">
-                  Free islandwide healthy meal delivery, court booking alerts & 2x Healthier SG Healthpoints
+                  Free islandwide clean meal delivery, court sniper alerts, active sports credits & 2-3x Healthier SG Healthpoints
                 </p>
               </div>
             </div>
@@ -284,16 +284,18 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               </div>
               <div>
                 <strong className="font-bold text-slate-900 block">
-                  Why Singaporeans Love NutriPass Pro:
+                  Why Members & Sports Teams Choose NutriPass:
                 </strong>
                 <span className="text-slate-600">
-                  Just 3 healthy meal deliveries a week saves you <strong>S$42.00 in delivery fees</strong> + <strong>S$11.50 in meal discounts</strong> monthly, turning a S$9.90 fee into over S$43 in net monthly savings!
+                  Individual Pro (S$89/mo) saves over <strong>S$80.00 in monthly delivery fees</strong> and <strong>S$45.00 in meal discounts</strong>, while Teams & Club (S$1,000/mo) includes <strong>S$250 in ActiveSG credits</strong> + group meal catering for 25 athletes!
                 </span>
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-[10px] uppercase font-bold text-slate-500">Net Estimated Value</div>
-              <div className="text-base font-black text-emerald-800">+S$43.60 / mo</div>
+              <div className="text-[10px] uppercase font-bold text-slate-500">Estimated Value</div>
+              <div className="text-base font-black text-emerald-800">
+                {selectedTier === 'club' ? '+S$1,450 / mo' : '+S$125.00 / mo'}
+              </div>
             </div>
           </div>
 
@@ -387,8 +389,8 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                   <span>
                     Activate {selectedPlanData?.name} (
                     {billingCycle === 'annual'
-                      ? `S$${((selectedPlanData?.priceAnnualMonthly || 7.90) * 12).toFixed(2)}/yr`
-                      : `S$${(selectedPlanData?.priceMonthly || 9.90).toFixed(2)}/mo`}
+                      ? `S$${((selectedPlanData?.priceAnnualMonthly || (selectedTier === 'club' ? 800 : 69)) * 12).toFixed(2)}/yr`
+                      : `S$${(selectedPlanData?.priceMonthly || (selectedTier === 'club' ? 1000 : 89)).toFixed(2)}/mo`}
                     )
                   </span>
                 </>

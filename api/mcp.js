@@ -1,48 +1,145 @@
 /**
  * NutriActive SG - NutriBalance MCP Server Connection Check & Router (/api/mcp.js)
- * Checks connection to https://server.smithery.ai/NutriBalance/nutribalance-mcp
- * and serves the pulled MCP dataset stored in /api/mcp-data.json.
+ * Live MCP protocol server & connection tester for https://server.smithery.ai/NutriBalance/nutribalance-mcp
+ * Self-contained MCP engine (does not require external mcp-data.json).
  */
-
-import fs from 'fs';
-import path from 'path';
 
 const UPSTREAM_SMITHERY_URL = 'https://server.smithery.ai/NutriBalance/nutribalance-mcp';
 const UPSTREAM_DEPLOYMENT_URL = 'https://nutribalance-mcp--nutribalance.run.tools';
 
-// Load pulled MCP server data from /api/mcp-data.json
-function loadPulledMcpData() {
-  try {
-    const filePath = path.join(process.cwd(), 'api', 'mcp-data.json');
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(raw);
-    }
-  } catch (err) {
-    console.warn('Could not read api/mcp-data.json, using memory cache:', err);
-  }
-
-  // Safe fallback if filesystem access is restricted
-  return {
-    sourceEndpoint: UPSTREAM_SMITHERY_URL,
-    deploymentUrl: UPSTREAM_DEPLOYMENT_URL,
-    server: {
-      qualifiedName: 'NutriBalance/nutribalance-mcp',
-      displayName: 'nutribalance-mcp',
-      description: 'Free nutrition tools for AI assistants — calculate TDEE & personalised macros, look up food nutrition data, generate meal plans, fix nutrient deficiencies, and score daily eating from 0–100.',
+export const NUTRIBALANCE_MCP_DATA = {
+  sourceEndpoint: UPSTREAM_SMITHERY_URL,
+  deploymentUrl: UPSTREAM_DEPLOYMENT_URL,
+  server: {
+    qualifiedName: 'NutriBalance/nutribalance-mcp',
+    displayName: 'nutribalance-mcp',
+    description: 'Free nutrition tools for AI assistants — calculate TDEE & personalised macros, look up food nutrition data, generate meal plans (standard, vegetarian, vegan, keto, high-protein), fix nutrient deficiencies with food & supplement guidance, and score a day\'s eating from 0–100.',
+    iconUrl: 'https://api.smithery.ai/servers/NutriBalance/nutribalance-mcp/icon',
+    remote: true,
+  },
+  tools: [
+    {
+      name: 'calculate_tdee',
+      description: 'Calculate TDEE (Total Daily Energy Expenditure), BMR, and personalised daily macro targets (protein, carbs, fat) based on the user\'s stats and goal. Use this when someone asks how many calories they should eat, what their maintenance calories are, or how to set up their macros.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          age: { type: 'integer', minimum: 16, maximum: 100, description: 'Age in years' },
+          goal: { type: 'string', enum: ['lose', 'maintain', 'gain'], description: 'Goal: lose weight | maintain weight | gain muscle/weight' },
+          gender: { type: 'string', enum: ['male', 'female'], description: 'Biological sex for BMR calculation' },
+          height_cm: { type: 'number', minimum: 100, maximum: 250, description: 'Height in centimetres' },
+          weight_kg: { type: 'number', minimum: 30, maximum: 300, description: 'Body weight in kilograms' },
+          activity_level: { type: 'string', enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'], description: 'Activity level' },
+        },
+      },
     },
-    tools: [
-      { name: 'calculate_tdee', description: 'Calculate TDEE, BMR, and macro targets' },
-      { name: 'lookup_nutrition', description: 'Look up nutritional profile for any food' },
-      { name: 'generate_meal_plan', description: 'Generate tailored meal plans' },
-      { name: 'fix_deficiency', description: 'Action plan to fix nutritional deficiencies' },
-      { name: 'nutrition_score', description: 'Score a day eating from 0-100' },
-    ],
-  };
-}
+    {
+      name: 'lookup_nutrition',
+      description: 'Look up the full nutritional profile (calories, protein, carbs, fat, fibre, and key micronutrients) for any food by name and serving size.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          food_name: { type: 'string', minLength: 1, maxLength: 100, description: 'Name of the food to look up' },
+          amount_grams: { type: 'number', default: 100, minimum: 1, maximum: 2000, description: 'Serving size in grams' },
+        },
+      },
+    },
+    {
+      name: 'generate_meal_plan',
+      description: 'Generate a full day meal plan (breakfast, lunch, snack, dinner) tailored to the user\'s calorie goal, dietary preference, and fitness goal.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          goal: { type: 'string', enum: ['lose', 'maintain', 'gain'], description: 'Fitness goal' },
+          target_calories: { type: 'number', minimum: 1200, maximum: 5000, description: 'Target daily calories' },
+          dietary_preference: { type: 'string', enum: ['standard', 'vegetarian', 'vegan', 'keto', 'high_protein'], default: 'standard' },
+        },
+      },
+    },
+    {
+      name: 'fix_deficiency',
+      description: 'Get a detailed action plan to fix a specific nutritional deficiency — including best foods to eat, foods to avoid, and supplement advice.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          age: { type: 'integer', minimum: 16, maximum: 100 },
+          gender: { type: 'string', enum: ['male', 'female'] },
+          nutrient: { type: 'string', description: 'The nutrient to address (e.g., iron, calcium, vitamin_c, protein)' },
+        },
+      },
+    },
+    {
+      name: 'nutrition_score',
+      description: 'Calculate a nutrition quality score (0–100) for a day\'s eating based on macros and optional micronutrient data.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          calories_eaten: { type: 'number', minimum: 0, maximum: 10000 },
+          calorie_target: { type: 'number', minimum: 800, maximum: 6000 },
+          protein_g: { type: 'number', minimum: 0, maximum: 500 },
+          carbs_g: { type: 'number', minimum: 0, maximum: 1000 },
+          fat_g: { type: 'number', minimum: 0, maximum: 500 },
+          fiber_g: { type: 'number', minimum: 0, maximum: 100 },
+          water_ml: { type: 'number', minimum: 0, maximum: 10000 },
+        },
+      },
+    },
+  ],
+  prompts: [
+    {
+      name: 'setup-nutrition-targets',
+      description: 'Calculate personalised TDEE and macro targets based on your stats and goal',
+      arguments: [
+        { name: 'weight_kg', description: 'Your body weight in kg', required: true },
+        { name: 'height_cm', description: 'Your height in cm', required: true },
+        { name: 'age', description: 'Your age in years', required: true },
+        { name: 'gender', description: 'male or female', required: true },
+        { name: 'activity_level', description: 'sedentary, light, moderate, active, or very_active', required: true },
+        { name: 'goal', description: 'lose, maintain, or gain', required: true },
+      ],
+    },
+    {
+      name: 'daily-nutrition-check',
+      description: 'Score your daily nutrition and get personalised recommendations',
+      arguments: [
+        { name: 'calories', description: 'Total calories eaten today', required: true },
+        { name: 'calorie_target', description: 'Your daily calorie target', required: true },
+        { name: 'protein', description: 'Protein eaten today in grams', required: true },
+        { name: 'protein_target', description: 'Your daily protein target in grams', required: true },
+        { name: 'carbs', description: 'Carbohydrates eaten today in grams', required: true },
+        { name: 'fat', description: 'Fat eaten today in grams', required: true },
+      ],
+    },
+    {
+      name: 'build-meal-plan',
+      description: 'Generate a full day meal plan tailored to your calorie goal and dietary preference',
+      arguments: [
+        { name: 'target_calories', description: 'Your daily calorie target', required: true },
+        { name: 'goal', description: 'lose, maintain, or gain', required: true },
+        { name: 'diet', description: 'standard, vegetarian, vegan, keto, or high_protein', required: true },
+      ],
+    },
+    {
+      name: 'fix-nutrient-deficiency',
+      description: 'Get a targeted action plan to fix a specific nutritional deficiency',
+      arguments: [
+        { name: 'nutrient', description: 'The nutrient you want to fix', required: true },
+        { name: 'gender', description: 'male or female (optional)', required: false },
+      ],
+    },
+  ],
+  resources: [
+    {
+      name: 'nutrient-reference',
+      uri: 'nutribalance://reference/nutrients',
+      description: 'Daily recommended intakes (RDI), deficiency symptoms, and top food sources for all 10 tracked nutrients: iron, calcium, vitamin C, vitamin D, magnesium, potassium, zinc, sodium, fibre, and protein.',
+      mimeType: 'text/plain',
+    },
+  ],
+};
 
 // Live connection checker function
-async function checkMcpServerConnection() {
+export async function checkMcpServerConnection() {
   const results = {
     checkedAt: new Date().toISOString(),
     overallStatus: 'unknown',
@@ -107,7 +204,7 @@ async function checkMcpServerConnection() {
 }
 
 // Local clinical execution engine for NutriBalance tools
-function executeLocalTool(name, args) {
+export function executeLocalTool(name, args = {}) {
   switch (name) {
     case 'calculate_tdee': {
       const { weight_kg = 70, height_cm = 175, age = 30, gender = 'male', activity_level = 'moderate', goal = 'maintain' } = args;
@@ -202,8 +299,6 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const pulledData = loadPulledMcpData();
-
   // GET: Connection check & Server diagnostic report
   if (req.method === 'GET') {
     const urlObj = new URL(req.url, 'http://localhost');
@@ -214,7 +309,7 @@ export default async function handler(req, res) {
     if (returnFullData) {
       return res.status(200).json({
         connection: connectionReport,
-        mcpData: pulledData,
+        mcpData: NUTRIBALANCE_MCP_DATA,
       });
     }
 
@@ -228,13 +323,13 @@ export default async function handler(req, res) {
       upstreamServer: {
         endpoint: UPSTREAM_SMITHERY_URL,
         deployment: UPSTREAM_DEPLOYMENT_URL,
-        displayName: pulledData.server?.displayName || 'nutribalance-mcp',
-        description: pulledData.server?.description?.trim(),
+        displayName: NUTRIBALANCE_MCP_DATA.server?.displayName || 'nutribalance-mcp',
+        description: NUTRIBALANCE_MCP_DATA.server?.description?.trim(),
       },
-      toolsAvailable: pulledData.tools?.map(t => t.name) || [],
-      promptsAvailable: pulledData.prompts?.map(p => p.name) || [],
-      resourcesAvailable: pulledData.resources?.map(r => r.name) || [],
-      pulledDataFile: '/api/mcp-data.json',
+      toolsAvailable: NUTRIBALANCE_MCP_DATA.tools?.map(t => t.name) || [],
+      promptsAvailable: NUTRIBALANCE_MCP_DATA.prompts?.map(p => p.name) || [],
+      resourcesAvailable: NUTRIBALANCE_MCP_DATA.resources?.map(r => r.name) || [],
+      mcpFile: '/api/mcp.js',
       checkInstruction: 'Perform a GET request to /api/mcp to verify live connection, or POST JSON-RPC 2.0 to execute tools.',
     });
   }
@@ -253,7 +348,7 @@ export default async function handler(req, res) {
           id,
           result: {
             connection,
-            server: pulledData.server,
+            server: NUTRIBALANCE_MCP_DATA.server,
           },
         });
       }
@@ -283,13 +378,13 @@ export default async function handler(req, res) {
         return res.status(200).json({ jsonrpc: '2.0', id, result: {} });
       }
 
-      // 3. Tools List (served from pulled mcp-data.json)
+      // 3. Tools List
       if (method === 'tools/list') {
         return res.status(200).json({
           jsonrpc: '2.0',
           id,
           result: {
-            tools: pulledData.tools || [],
+            tools: NUTRIBALANCE_MCP_DATA.tools || [],
           },
         });
       }
@@ -315,7 +410,7 @@ export default async function handler(req, res) {
               return res.status(200).json(upstreamData);
             }
           } catch (e) {
-            console.warn('Upstream call error, falling back to local clinical engine:', e);
+            console.warn('Upstream call error, falling back to local engine:', e);
           }
         }
 
@@ -335,24 +430,24 @@ export default async function handler(req, res) {
         });
       }
 
-      // 5. Prompts List (served from pulled mcp-data.json)
+      // 5. Prompts List
       if (method === 'prompts/list') {
         return res.status(200).json({
           jsonrpc: '2.0',
           id,
           result: {
-            prompts: pulledData.prompts || [],
+            prompts: NUTRIBALANCE_MCP_DATA.prompts || [],
           },
         });
       }
 
-      // 6. Resources List (served from pulled mcp-data.json)
+      // 6. Resources List
       if (method === 'resources/list') {
         return res.status(200).json({
           jsonrpc: '2.0',
           id,
           result: {
-            resources: pulledData.resources || [],
+            resources: NUTRIBALANCE_MCP_DATA.resources || [],
           },
         });
       }

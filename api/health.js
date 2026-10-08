@@ -133,9 +133,9 @@ export default async function handler(req, res) {
           },
           {
             id: 'pro',
-            name: 'NutriPass Pro',
-            monthlyFeeSgd: 9.90,
-            annualMonthlyFeeSgd: 7.90,
+            name: 'NutriPass Pro (Individual)',
+            monthlyFeeSgd: 89,
+            annualMonthlyFeeSgd: 69,
             deliveryFeeSgd: 0,
             unlimitedAiScans: true,
             mealDiscountPct: 10,
@@ -143,22 +143,24 @@ export default async function handler(req, res) {
             healthpointsMultiplier: 2,
           },
           {
-            id: 'elite',
-            name: 'NutriPass Family & Elite',
-            monthlyFeeSgd: 19.90,
-            annualMonthlyFeeSgd: 15.90,
+            id: 'club',
+            name: 'NutriPass Teams & Club',
+            monthlyFeeSgd: 1000,
+            annualMonthlyFeeSgd: 800,
             deliveryFeeSgd: 0,
             unlimitedAiScans: true,
             mealDiscountPct: 15,
-            activeSgCreditsMonthlySgd: 10,
+            activeSgCreditsMonthlySgd: 250,
             healthpointsMultiplier: 3,
+            membersCapacity: 25,
           },
         ],
         userSubscription: {
           tier: 'free',
           status: 'free',
           proTrialAvailable: true,
-          standardProFeeSgd: 9.90,
+          standardProFeeSgd: 89,
+          teamsClubFeeSgd: 1000,
           benefits: ['S$0 Free Islandwide Delivery', '10% Off All Meals', 'Unlimited AI Scans', '2x Healthpoints'],
         },
       };
@@ -173,9 +175,10 @@ export default async function handler(req, res) {
       if (action === 'subscribe') {
         const tier = body.tier || 'pro';
         const billingCycle = body.billingCycle || 'monthly';
-        const feeSgd = tier === 'elite' 
-          ? (billingCycle === 'annual' ? 15.90 * 12 : 19.90) 
-          : (billingCycle === 'annual' ? 7.90 * 12 : 9.90);
+        const isClub = tier === 'club' || tier === 'elite';
+        const feeSgd = isClub 
+          ? (billingCycle === 'annual' ? 800 * 12 : 1000) 
+          : (billingCycle === 'annual' ? 69 * 12 : 89);
 
         return res.status(200).json({
           success: true,
@@ -185,8 +188,8 @@ export default async function handler(req, res) {
           feeSgd,
           currency: 'SGD',
           freeDelivery: true,
-          mealDiscountPct: tier === 'elite' ? 15 : 10,
-          healthpointsMultiplier: tier === 'elite' ? 3 : 2,
+          mealDiscountPct: isClub ? 15 : 10,
+          healthpointsMultiplier: isClub ? 3 : 2,
           activatedAt: new Date().toISOString(),
           message: `NutriPass ${tier.toUpperCase()} membership activated. S$0 delivery and discounts enabled.`,
         });
