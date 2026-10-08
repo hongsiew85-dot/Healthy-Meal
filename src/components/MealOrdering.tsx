@@ -11,10 +11,14 @@ import {
   Leaf, 
   Flame, 
   X,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Barcode,
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { MealItem, DietaryGoal, CartItem, MealCustomizationOption } from '../types';
 import { HEALTHY_MEALS } from '../data/mockData';
+import { fetchOpenFoodFactsProduct } from '../services/openFoodFactsService';
 
 interface MealOrderingProps {
   onAddToCart: (meal: MealItem, quantity: number, selectedOptions: { groupName: string; option: MealCustomizationOption }[], notes?: string) => void;
@@ -22,10 +26,16 @@ interface MealOrderingProps {
 }
 
 export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuickLogMeal }) => {
+  const [mealsList, setMealsList] = useState<MealItem[]>(HEALTHY_MEALS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGoal, setSelectedGoal] = useState<DietaryGoal>('all');
   const [customizingMeal, setCustomizingMeal] = useState<MealItem | null>(null);
   
+  // OpenFoodFacts barcode lookup state
+  const [barcodeInput, setBarcodeInput] = useState('737628064502');
+  const [isFetchingBarcode, setIsFetchingBarcode] = useState(false);
+  const [barcodeMessage, setBarcodeMessage] = useState<string | null>(null);
+
   // Customization state
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, MealCustomizationOption>>({});
@@ -43,19 +53,49 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
     { id: 'halal', label: 'Halal-Certified' },
   ];
 
+  const handleFetchBarcode = async (barcodeToFetch: string) => {
+    if (!barcodeToFetch.trim()) return;
+    setIsFetchingBarcode(true);
+    setBarcodeMessage(null);
+
+    try {
+      const result = await fetchOpenFoodFactsProduct(barcodeToFetch);
+      if (result) {
+        // Check if already in list
+        setMealsList(prev => {
+          const exists = prev.some(m => m.id === result.meal.id || m.barcode === result.meal.barcode);
+          if (exists) return prev;
+          return [result.meal, ...prev];
+        });
+        setBarcodeMessage(`Loaded "${result.meal.name}" from Open Food Facts!`);
+        setSearchQuery(result.meal.name);
+      } else {
+        setBarcodeMessage(`Product ${barcodeToFetch} not found on Open Food Facts.`);
+      }
+    } catch (err) {
+      setBarcodeMessage('Error querying Open Food Facts API.');
+    } finally {
+      setIsFetchingBarcode(false);
+      setTimeout(() => setBarcodeMessage(null), 4000);
+    }
+  };
+
   const filteredMeals = useMemo(() => {
-    return HEALTHY_MEALS.filter(meal => {
+    return mealsList.filter(meal => {
+      const q = searchQuery.toLowerCase();
       const matchesSearch = 
-        meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        meal.hawkerStallOrBrand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        meal.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        meal.description.toLowerCase().includes(searchQuery.toLowerCase());
+        meal.name.toLowerCase().includes(q) ||
+        meal.hawkerStallOrBrand.toLowerCase().includes(q) ||
+        meal.location.toLowerCase().includes(q) ||
+        meal.description.toLowerCase().includes(q) ||
+        (meal.barcode && meal.barcode.includes(q)) ||
+        (meal.brand && meal.brand.toLowerCase().includes(q));
 
       const matchesGoal = selectedGoal === 'all' || meal.tags.includes(selectedGoal);
 
       return matchesSearch && matchesGoal;
     });
-  }, [searchQuery, selectedGoal]);
+  }, [mealsList, searchQuery, selectedGoal]);
 
   const handleOpenCustomize = (meal: MealItem) => {
     setCustomizingMeal(meal);
@@ -173,6 +213,80 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
       </div>
 
+      {/* Open Food Facts Live Integration Box */}
+      <div className="bg-white rounded-2xl border border-emerald-200/80 p-4 sm:p-5 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
+              <Barcode className="w-4 h-4 text-emerald-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-900">Open Food Facts API Live Integration</span>
+                <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                  GET api/v2/product/{'{barcode}'}.json
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Lookup any packaged food product from Open Food Facts to fetch live ingredients & macros.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setBarcodeInput('737628064502');
+                handleFetchBarcode('737628064502');
+              }}
+              disabled={isFetchingBarcode}
+              className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Load Noodle Kit (#737628064502)</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 border-t border-slate-100">
+          <div className="relative flex-1">
+            <Barcode className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              placeholder="Enter product barcode (e.g. 737628064502)..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600 font-mono"
+            />
+          </div>
+
+          <button
+            onClick={() => handleFetchBarcode(barcodeInput)}
+            disabled={isFetchingBarcode || !barcodeInput.trim()}
+            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer flex-shrink-0"
+          >
+            {isFetchingBarcode ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Querying OpenFoodFacts...</span>
+              </>
+            ) : (
+              <>
+                <Search className="w-3.5 h-3.5" />
+                <span>Fetch from Open Food Facts</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {barcodeMessage && (
+          <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-900 text-xs font-semibold flex items-center gap-2 border border-emerald-200">
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{barcodeMessage}</span>
+          </div>
+        )}
+      </div>
+
       {/* Search and Interactive Filter Controls */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -183,7 +297,7 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes (Lei Cha, Chicken Rice, YTF), hawker stall, or location..."
+              placeholder="Search dishes (Lei Cha, Chicken Rice, YTF), barcode (737628064502), or location..."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition"
             />
             {searchQuery && (
@@ -278,6 +392,28 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
                   <h3 className="text-base font-bold text-slate-900 leading-snug group-hover:text-emerald-800 transition">
                     {meal.name}
                   </h3>
+
+                  {/* Open Food Facts Verified indicator */}
+                  {meal.isOpenFoodFactsVerified && (
+                    <div className="flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 px-2.5 py-1 rounded-xl">
+                      <Barcode className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span className="font-semibold">Open Food Facts Verified</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-mono">{meal.barcode}</span>
+                      {meal.openFoodFactsUrl && (
+                        <a
+                          href={meal.openFoodFactsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto text-emerald-700 hover:text-emerald-900 flex items-center gap-0.5 font-bold"
+                          title="View on OpenFoodFacts.org"
+                        >
+                          <span>OFF</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
 
                   {/* HPB Health Claim (Clean typography) */}
                   <div className="text-xs font-semibold text-emerald-700 flex items-center gap-1">

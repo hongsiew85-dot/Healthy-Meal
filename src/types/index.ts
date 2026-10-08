@@ -48,6 +48,11 @@ export interface MealItem {
   rating: number;
   reviewsCount: number;
   prepTimeMins: number;
+  barcode?: string;
+  brand?: string;
+  ingredientsText?: string;
+  openFoodFactsUrl?: string;
+  isOpenFoodFactsVerified?: boolean;
   customizations?: MealCustomizationGroup[];
 }
 

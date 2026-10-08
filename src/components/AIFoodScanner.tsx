@@ -12,11 +12,16 @@ import {
   ArrowRight,
   Info,
   CheckCircle2,
-  FileText
+  FileText,
+  Barcode,
+  ExternalLink,
+  Loader2,
+  Search
 } from 'lucide-react';
 import { FoodScanAnalysis, LoggedMeal } from '../types';
 import { analyzeFoodWithGemini } from '../services/geminiService';
 import { PRESET_FOOD_SCANS } from '../data/mockData';
+import { fetchOpenFoodFactsProduct } from '../services/openFoodFactsService';
 
 interface AIFoodScannerProps {
   onLogScannedMeal: (meal: LoggedMeal) => void;
@@ -27,7 +32,8 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
   const [inputText, setInputText] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<FoodScanAnalysis | null>(null);
-  const [activeTab, setActiveTab] = useState<'camera' | 'presets' | 'text'>('camera');
+  const [activeTab, setActiveTab] = useState<'camera' | 'presets' | 'text' | 'barcode'>('camera');
+  const [barcodeInput, setBarcodeInput] = useState('737628064502');
   const [justLogged, setJustLogged] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +42,7 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
     { id: 'lei_cha', label: 'Hakka Thunder Tea Rice (Lei Cha)', icon: '🍵', preview: PRESET_FOOD_SCANS.lei_cha },
     { id: 'yong_tau_foo', label: 'Clear Soup Yong Tau Foo (YTF)', icon: '🥬', preview: PRESET_FOOD_SCANS.yong_tau_foo },
     { id: 'fish_soup', label: 'Sliced Batang Fish Soup', icon: '🐟', preview: PRESET_FOOD_SCANS.fish_soup },
+    { id: 'thai_peanut_noodles', label: 'Thai Peanut Rice Noodles (Open Food Facts #737628064502)', icon: '🍜', preview: PRESET_FOOD_SCANS.thai_peanut_noodles },
   ];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +74,23 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
     try {
       const res = await analyzeFoodWithGemini(imgData, textDesc);
       setAnalysisResult(res);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleBarcodeLookup = async (barcodeToFetch: string) => {
+    if (!barcodeToFetch.trim()) return;
+    setIsScanning(true);
+    setJustLogged(false);
+    try {
+      const res = await fetchOpenFoodFactsProduct(barcodeToFetch);
+      if (res) {
+        setSelectedImage(res.meal.imageUrl);
+        setAnalysisResult(res.scanAnalysis);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -157,6 +181,18 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
           >
             <FileText className="w-4 h-4" />
             <span>Describe Meal</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('barcode')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              activeTab === 'barcode'
+                ? 'bg-white text-emerald-800 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Barcode className="w-4 h-4 text-emerald-600" />
+            <span>Open Food Facts Barcode</span>
           </button>
         </div>
       </div>
@@ -296,6 +332,86 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
                 <span>Analyze Meal with Gemini</span>
               </button>
             </form>
+          )}
+
+          {activeTab === 'barcode' && (
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 subtle-card-shadow">
+              <div className="flex items-center gap-2">
+                <Barcode className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Open Food Facts Barcode Scanner
+                </h3>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Connects live to <span className="font-mono text-emerald-800 font-semibold">https://world.openfoodfacts.org/api/v2/product/{'{barcode}'}.json</span> to fetch certified nutritional databases, ingredients, and Nutri-Scores.
+              </p>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
+                  Barcode Number (UPC / EAN)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    placeholder="e.g. 737628064502"
+                    className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600 font-mono"
+                  />
+                  <button
+                    onClick={() => handleBarcodeLookup(barcodeInput)}
+                    disabled={isScanning || !barcodeInput.trim()}
+                    className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-200 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                  >
+                    {isScanning ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    <span>Lookup</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Quick Verification Presets
+                </span>
+                <button
+                  onClick={() => {
+                    setBarcodeInput('737628064502');
+                    handleBarcodeLookup('737628064502');
+                  }}
+                  className="w-full p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 text-left transition flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <span>Thai Peanut Rice Noodle Kit</span>
+                      <span className="text-[10px] font-mono text-emerald-700 bg-white px-1 rounded border border-emerald-200">
+                        #737628064502
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-emerald-800">
+                      Simply Asia / Thai Kitchen · 385 kcal · Nutri-Grade D
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 transition" />
+                </button>
+              </div>
+
+              <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                <a
+                  href="https://world.openfoodfacts.org/product/737628064502"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline text-slate-500"
+                >
+                  Inspect API source on OpenFoodFacts.org
+                </a>
+              </div>
+            </div>
           )}
 
         </div>

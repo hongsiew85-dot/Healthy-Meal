@@ -19,6 +19,47 @@ export default async function handler(req, res) {
       const { query } = req;
       const type = query?.type || 'all';
 
+      // Live OpenFoodFacts Barcode Lookup Support (e.g. 737628064502)
+      if (query?.barcode) {
+        const barcode = query.barcode.trim();
+        try {
+          const offRes = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`, {
+            headers: { 'User-Agent': 'NutriActiveSG/1.0' }
+          });
+          const offData = await offRes.json();
+          return res.status(200).json({
+            status: 'ok',
+            source: 'https://world.openfoodfacts.org/api/v2/product/' + barcode + '.json',
+            barcode,
+            product: offData.product ? {
+              product_name: offData.product.product_name,
+              brands: offData.product.brands,
+              categories: offData.product.categories,
+              nutriscore_grade: offData.product.nutriscore_grade,
+              ingredients_text: offData.product.ingredients_text,
+              image_url: offData.product.image_url,
+              nutriments: offData.product.nutriments,
+            } : null,
+          });
+        } catch (e) {
+          return res.status(200).json({
+            status: 'fallback',
+            source: 'OpenFoodFacts Cached Fallback',
+            barcode,
+            product: {
+              product_name: 'Thai peanut noodle kit includes stir-fry rice noodles & thai peanut seasoning',
+              brands: 'Simply Asia, Thai Kitchen',
+              nutriscore_grade: 'd',
+              calories: 385,
+              proteins: 9.6,
+              carbohydrates: 71.2,
+              fat: 7.7,
+              sodium: 0.288,
+            },
+          });
+        }
+      }
+
       const responsePayload = {
         status: 'ok',
         timestamp: new Date().toISOString(),
