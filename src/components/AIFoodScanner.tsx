@@ -42,7 +42,7 @@ export const AIFoodScanner: React.FC<AIFoodScannerProps> = ({ onLogScannedMeal }
     { id: 'lei_cha', label: 'Hakka Thunder Tea Rice (Lei Cha)', icon: '🍵', preview: PRESET_FOOD_SCANS.lei_cha },
     { id: 'yong_tau_foo', label: 'Clear Soup Yong Tau Foo (YTF)', icon: '🥬', preview: PRESET_FOOD_SCANS.yong_tau_foo },
     { id: 'fish_soup', label: 'Sliced Batang Fish Soup', icon: '🐟', preview: PRESET_FOOD_SCANS.fish_soup },
-    { id: 'thai_peanut_noodles', label: 'Thai Peanut Rice Noodles (Open Food Facts #737628064502)', icon: '🍜', preview: PRESET_FOOD_SCANS.thai_peanut_noodles },
+    { id: 'thai_peanut_noodles', label: 'Thai Peanut Rice Noodles', icon: '🍜', preview: PRESET_FOOD_SCANS.thai_peanut_noodles },
   ];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -10,9 +10,7 @@ import {
   Leaf, 
   Flame, 
   X, 
-  UtensilsCrossed, 
-  Barcode, 
-  ExternalLink 
+  UtensilsCrossed
 } from 'lucide-react';
 import { MealItem, DietaryGoal, CartItem, MealCustomizationOption } from '../types';
 import { HEALTHY_MEALS } from '../data/mockData';
@@ -166,37 +164,6 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
       </div>
 
-      {/* Open Food Facts Live Integration Box */}
-      <div className="bg-white rounded-2xl border border-emerald-200/80 p-4 sm:p-4.5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
-            <Barcode className="w-4 h-4 text-emerald-700" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900">Open Food Facts Verified Integration</span>
-              <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-mono">
-                Barcode 737628064502
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Thai Kitchen Peanut Rice Noodles verified directly from Open Food Facts API with full ingredients & Nutri-Grade.
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            const noodleMeal = mealsList.find(m => m.barcode === '737628064502');
-            if (noodleMeal) handleOpenCustomize(noodleMeal);
-          }}
-          className="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto flex-shrink-0"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>Customize Noodle Kit</span>
-        </button>
-      </div>
-
       {/* Segmented Dietary Filter Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
           {filterTabs.map(tab => {
@@ -278,28 +245,6 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
                     {meal.name}
                   </h3>
 
-                  {/* Open Food Facts Verified indicator */}
-                  {meal.isOpenFoodFactsVerified && (
-                    <div className="flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50/80 border border-emerald-200/80 px-2.5 py-1 rounded-xl">
-                      <Barcode className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                      <span className="font-semibold">Open Food Facts Verified</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-mono">{meal.barcode}</span>
-                      {meal.openFoodFactsUrl && (
-                        <a
-                          href={meal.openFoodFactsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-auto text-emerald-700 hover:text-emerald-900 flex items-center gap-0.5 font-bold"
-                          title="View on OpenFoodFacts.org"
-                        >
-                          <span>OFF</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  )}
-
                   {/* HPB Health Claim (Clean typography) */}
                   <div className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
                     <Leaf className="w-3 h-3 flex-shrink-0" />
@@ -380,7 +325,7 @@ export const MealOrdering: React.FC<MealOrderingProps> = ({ onAddToCart, onQuick
           <UtensilsCrossed className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-lg font-bold text-slate-800">No dishes match this dietary goal</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Try selecting "All Healthy Eats" to view all HPB-approved Singapore dishes and Open Food Facts items.
+            Try selecting "All Healthy Eats" to view all HPB-approved Singapore dishes.
           </p>
           <button
             onClick={() => {
