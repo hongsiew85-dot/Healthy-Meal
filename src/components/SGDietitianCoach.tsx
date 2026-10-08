@@ -120,6 +120,50 @@ export const SGDietitianCoach: React.FC<SGDietitianCoachProps> = ({ onNavigateTo
         </div>
       </div>
 
+      {/* NutriBalance MCP Server Integration Badge & Tools Banner */}
+      <div className="p-4 rounded-2xl bg-white border border-emerald-200/80 subtle-card-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900">NutriBalance MCP Active</span>
+              <a
+                href="/api/mcp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 hover:underline"
+              >
+                /api/mcp
+              </a>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Connected to <span className="font-mono text-[10px]">server.smithery.ai/NutriBalance/nutribalance-mcp</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => handleSend('Calculate my TDEE, BMR, and daily macro targets (NutriBalance MCP calculate_tdee)')}
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+          >
+            calculate_tdee
+          </button>
+          <button
+            onClick={() => handleSend('Generate a 2000 kcal high-protein meal plan for Singapore active lifestyle (NutriBalance MCP generate_meal_plan)')}
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+          >
+            generate_meal_plan
+          </button>
+          <button
+            onClick={() => handleSend('How do I fix protein and iron deficiency for sports performance? (NutriBalance MCP fix_deficiency)')}
+            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 text-slate-700 text-[11px] font-semibold transition cursor-pointer"
+          >
+            fix_deficiency
+          </button>
+        </div>
+      </div>
+
       {/* Chat Messages Container */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 subtle-card-shadow space-y-5 min-h-[460px] flex flex-col justify-between">
         

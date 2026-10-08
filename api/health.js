@@ -65,9 +65,12 @@ export default async function handler(req, res) {
         timestamp: new Date().toISOString(),
         service: 'NutriActive SG MCP Health Router',
         mcpStatus: {
-          endpoint: 'https://mcp.smithery.ai/hongsiew85',
+          localEndpoint: '/api/mcp',
+          nutriBalanceMcpUrl: 'https://server.smithery.ai/NutriBalance/nutribalance-mcp',
           nutriBalanceStatus: 'connected',
           grabMapsStatus: 'connected',
+          protocolVersion: '2024-11-05',
+          tools: ['calculate_tdee', 'lookup_nutrition', 'generate_meal_plan', 'fix_deficiency', 'nutrition_score'],
         },
         userMacros: {
           targetCalories: 2000,

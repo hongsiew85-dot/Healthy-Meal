@@ -62,6 +62,18 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-emerald-300">ActiveSG ID:</span>
               <span className="font-mono text-emerald-100 font-semibold">SG-884920</span>
             </div>
+            <div className="hidden md:flex items-center gap-1.5 border-l border-emerald-700/60 pl-3">
+              <span className="text-emerald-300">MCP Server:</span>
+              <a
+                href="/api/mcp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-emerald-200 hover:text-white font-semibold underline decoration-emerald-500"
+                title="NutriBalance MCP Server Endpoint (/api/mcp)"
+              >
+                /api/mcp
+              </a>
+            </div>
           </div>
         </div>
       </div>
