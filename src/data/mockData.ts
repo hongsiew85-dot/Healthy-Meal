@@ -1,4 +1,4 @@
-import { MealItem, ActiveSGVenue, FoodScanAnalysis } from '../types';
+import { MealItem, ActiveSGVenue, FoodScanAnalysis, SubscriptionPlan, UserSubscription } from '../types';
 
 export const HEALTHY_MEALS: MealItem[] = [
   {
@@ -570,4 +570,84 @@ export const PRESET_FOOD_SCANS: Record<string, FoodScanAnalysis> = {
     ],
     isHealthyChoice: false,
   },
+};
+
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: 'free',
+    name: 'NutriActive Free',
+    badge: 'Standard',
+    priceMonthly: 0,
+    priceAnnualMonthly: 0,
+    popular: false,
+    description: 'Basic nutrition tracking and standard ActiveSG court booking for Singapore residents.',
+    perks: [
+      'Standard islandwide meal delivery (S$3.50 flat fee)',
+      '3 AI food camera scans per day',
+      'Standard ActiveSG court slot notifications',
+      '1x Healthier SG Healthpoints earn rate',
+      'Access to Singapore HPB hawker database',
+    ],
+    hpbHealthpointsMultiplier: 1,
+    deliveryDiscount: 'none',
+    mealDiscountPercentage: 0,
+    courtAlerts: false,
+    unlimitedScans: false,
+  },
+  {
+    id: 'pro',
+    name: 'NutriPass Pro',
+    badge: 'Most Popular',
+    priceMonthly: 9.90,
+    priceAnnualMonthly: 7.90,
+    popular: true,
+    description: 'The ultimate health & fitness companion: S$0 free meal deliveries, unlimited AI scans, and ActiveSG priority court alerts.',
+    perks: [
+      'S$0 Free Islandwide Delivery on all clean meals (no min. spend)',
+      '10% Instant Discount on all healthy meals & hawker bowls',
+      'Unlimited AI Macro Camera & Nutri-Grade scans',
+      'ActiveSG Court Sniper: Instant peak slot release alerts',
+      '2x Healthier SG Healthpoints multiplier (+80 pts/order)',
+      'Interactive SG Dietitian AI unlimited personalized meal plans',
+      '14-Day Free Trial included (cancel anytime)',
+    ],
+    hpbHealthpointsMultiplier: 2,
+    deliveryDiscount: 'free_all',
+    mealDiscountPercentage: 10,
+    courtAlerts: true,
+    unlimitedScans: true,
+  },
+  {
+    id: 'elite',
+    name: 'NutriPass Family & Elite',
+    badge: 'All-Inclusive',
+    priceMonthly: 19.90,
+    priceAnnualMonthly: 15.90,
+    popular: false,
+    description: 'Complete family wellness and athletic peak performance with multi-user sharing and ActiveSG credits.',
+    perks: [
+      'All NutriPass Pro benefits for up to 4 family members',
+      'S$10 monthly ActiveSG sports & gym facility credits',
+      'Automated Weekly Clean Meal Prep scheduling',
+      '3x Healthier SG Healthpoints multiplier (+120 pts/order)',
+      'Priority customer concierge & dietary coaching',
+      'Clinical Healthier SG exportable PDF metabolic reports',
+    ],
+    hpbHealthpointsMultiplier: 3,
+    deliveryDiscount: 'free_priority',
+    mealDiscountPercentage: 15,
+    courtAlerts: true,
+    unlimitedScans: true,
+  },
+];
+
+export const INITIAL_USER_SUBSCRIPTION: UserSubscription = {
+  tier: 'free',
+  billingCycle: 'monthly',
+  status: 'free',
+  startDate: '2026-10-01',
+  renewalDate: '2026-11-01',
+  feeSgd: 0,
+  savingsTotalSgd: 0,
+  autoRenew: true,
 };

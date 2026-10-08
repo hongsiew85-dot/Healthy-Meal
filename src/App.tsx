@@ -6,19 +6,24 @@ import { AIFoodScanner } from './components/AIFoodScanner';
 import { DailyTracker } from './components/DailyTracker';
 import { SGDietitianCoach } from './components/SGDietitianCoach';
 import { CartDrawer } from './components/CartDrawer';
+import { SubscriptionModal } from './components/SubscriptionModal';
 import { 
   CartItem, 
   MealItem, 
   FacilityBooking, 
   LoggedMeal, 
   LoggedActivity, 
-  MealCustomizationOption 
+  MealCustomizationOption,
+  UserSubscription 
 } from './types';
+import { INITIAL_USER_SUBSCRIPTION } from './data/mockData';
 import { Sparkles, ShieldCheck, Heart, Award, Check } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'meals' | 'activesg' | 'scanner' | 'tracker' | 'coach'>('meals');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [subscription, setSubscription] = useState<UserSubscription>(INITIAL_USER_SUBSCRIPTION);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [healthpoints, setHealthpoints] = useState(1420);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -130,7 +135,7 @@ export default function App() {
   };
 
   // Checkout complete: logs ordered meals to daily tracker and awards points
-  const handleCheckoutComplete = (orderedItems: CartItem[]) => {
+  const handleCheckoutComplete = (orderedItems: CartItem[], subscribedInCheckout?: boolean) => {
     orderedItems.forEach(item => {
       const newMeal: LoggedMeal = {
         id: `order-meal-${Date.now()}-${Math.random()}`,
@@ -147,8 +152,10 @@ export default function App() {
       setLoggedMeals(prev => [newMeal, ...prev]);
     });
 
-    setHealthpoints(prev => prev + 40);
-    showToast('Order confirmed! Meals logged to your Daily Balance.');
+    const isSub = subscription.tier !== 'free' || subscribedInCheckout;
+    const earnedPts = isSub ? 80 : 40;
+    setHealthpoints(prev => prev + earnedPts);
+    showToast(`Order confirmed! Meals logged to your Daily Balance (+${earnedPts} pts).`);
   };
 
   // ActiveSG booking complete: adds to activities, adds points
@@ -163,9 +170,10 @@ export default function App() {
       location: booking.venueName,
     };
 
+    const multiplier = subscription.tier === 'elite' ? 3 : subscription.tier === 'pro' ? 2 : 1;
     setLoggedActivities(prev => [newActivity, ...prev]);
-    setHealthpoints(prev => prev + 50);
-    showToast(`ActiveSG booking confirmed! Burn of ~${booking.estimatedCalorieBurn} kcal synced.`);
+    setHealthpoints(prev => prev + 50 * multiplier);
+    showToast(`ActiveSG booking confirmed! Burn of ~${booking.estimatedCalorieBurn} kcal synced (+${50 * multiplier} pts).`);
   };
 
   // Direct meal log from menu or AI Scanner
@@ -236,6 +244,8 @@ export default function App() {
         caloriesIn={totalCaloriesIn}
         caloriesOut={totalCaloriesBurned}
         healthpoints={healthpoints}
+        subscription={subscription}
+        onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -289,6 +299,18 @@ export default function App() {
         onRemoveItem={handleRemoveCartItem}
         onClearCart={handleClearCart}
         onCheckoutComplete={handleCheckoutComplete}
+        subscription={subscription}
+        onUpdateSubscription={setSubscription}
+        onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
+      />
+
+      {/* Subscription Plans & Billing Modal */}
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        currentSubscription={subscription}
+        onUpdateSubscription={setSubscription}
+        onToast={showToast}
       />
 
       {/* Toast Notification */}
@@ -347,6 +369,12 @@ export default function App() {
                 className="hover:text-emerald-700 transition cursor-pointer"
               >
                 SG Dietitian AI
+              </button>
+              <button 
+                onClick={() => setIsSubscriptionModalOpen(true)}
+                className="text-amber-800 font-bold hover:text-amber-950 transition cursor-pointer flex items-center gap-1"
+              >
+                <span>NutriPass (S$9.90/mo)</span>
               </button>
             </div>
           </div>

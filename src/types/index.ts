@@ -157,3 +157,33 @@ export interface ChatMessage {
     label: string;
   };
 }
+
+export type SubscriptionTier = 'free' | 'pro' | 'elite';
+export type BillingCycle = 'monthly' | 'annual';
+
+export interface SubscriptionPlan {
+  id: SubscriptionTier;
+  name: string;
+  badge?: string;
+  priceMonthly: number;
+  priceAnnualMonthly: number;
+  popular?: boolean;
+  description: string;
+  perks: string[];
+  hpbHealthpointsMultiplier: number;
+  deliveryDiscount: 'none' | 'free_all' | 'free_priority';
+  mealDiscountPercentage: number;
+  courtAlerts: boolean;
+  unlimitedScans: boolean;
+}
+
+export interface UserSubscription {
+  tier: SubscriptionTier;
+  billingCycle: BillingCycle;
+  status: 'active' | 'trial' | 'free';
+  startDate: string;
+  renewalDate: string;
+  feeSgd: number;
+  savingsTotalSgd: number;
+  autoRenew: boolean;
+}

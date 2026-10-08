@@ -9,12 +9,13 @@ import {
   MapPin, 
   Clock, 
   CheckCircle2, 
-  Sparkles,
-  Award,
-  Tag
+  Sparkles, 
+  Award, 
+  Tag, 
+  Crown 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { CartItem, MealItem } from '../types';
+import { CartItem, MealItem, UserSubscription } from '../types';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -23,7 +24,10 @@ interface CartDrawerProps {
   onUpdateQuantity: (index: number, newQty: number) => void;
   onRemoveItem: (index: number) => void;
   onClearCart: () => void;
-  onCheckoutComplete: (meals: CartItem[]) => void;
+  onCheckoutComplete: (meals: CartItem[], subscribedInCheckout?: boolean) => void;
+  subscription: UserSubscription;
+  onUpdateSubscription: (newSub: UserSubscription) => void;
+  onOpenSubscriptionModal: () => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -34,6 +38,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onClearCart,
   onCheckoutComplete,
+  subscription,
+  onUpdateSubscription,
+  onOpenSubscriptionModal,
 }) => {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'activesg_pickup'>('delivery');
   const [address, setAddress] = useState('Marina Bay Financial Centre Tower 2, #18-01');
@@ -41,13 +48,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [orderComplete, setOrderComplete] = useState<string | null>(null);
+  const [subscribeAtCheckout, setSubscribeAtCheckout] = useState(false);
 
   if (!isOpen) return null;
 
   const subtotal = cart.reduce((acc, item) => acc + item.itemTotal, 0);
-  const deliveryFee = deliveryType === 'activesg_pickup' ? 0 : subtotal >= 30 ? 0 : 3.50;
-  const discount = promoApplied ? 3.00 : 0;
-  const finalTotal = Math.max(0, subtotal + deliveryFee - discount);
+  const isSubscriber = subscription.tier !== 'free' || subscribeAtCheckout;
+  const subscriberMealDiscount = isSubscriber ? subtotal * 0.10 : 0;
+  const deliveryFee = deliveryType === 'activesg_pickup' || isSubscriber ? 0 : subtotal >= 30 ? 0 : 3.50;
+  const subscriptionAddonFee = subscribeAtCheckout ? 9.90 : 0;
+  const promoDiscount = promoApplied ? 3.00 : 0;
+  const finalTotal = Math.max(0, subtotal + deliveryFee + subscriptionAddonFee - promoDiscount - subscriberMealDiscount);
   const totalCalories = cart.reduce((acc, item) => acc + (item.meal.nutrition.calories * item.quantity), 0);
   const totalProtein = cart.reduce((acc, item) => acc + (item.meal.nutrition.protein * item.quantity), 0);
 
@@ -61,6 +72,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const orderId = `SG-NUTRI-${Math.floor(10000 + Math.random() * 90000)}`;
     setOrderComplete(orderId);
 
+    if (subscribeAtCheckout) {
+      const renewal = new Date();
+      renewal.setMonth(renewal.getMonth() + 1);
+      onUpdateSubscription({
+        tier: 'pro',
+        billingCycle: 'monthly',
+        status: 'active',
+        startDate: new Date().toISOString().split('T')[0],
+        renewalDate: renewal.toISOString().split('T')[0],
+        feeSgd: 9.90,
+        savingsTotalSgd: subscription.savingsTotalSgd + 3.50 + subscriberMealDiscount,
+        autoRenew: true,
+      });
+    }
+
     try {
       confetti({
         particleCount: 100,
@@ -70,7 +96,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       });
     } catch (e) {}
 
-    onCheckoutComplete(cart);
+    onCheckoutComplete(cart, subscribeAtCheckout);
   };
 
   return (
@@ -113,11 +139,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs text-emerald-900 w-full space-y-1">
               <div className="font-bold flex items-center justify-center gap-1">
                 <Award className="w-4 h-4 text-amber-500" />
-                <span>+40 Healthpoints Earned!</span>
+                <span>+{isSubscriber ? 80 : 40} Healthpoints Earned! {isSubscriber && '(2x NutriPass Multiplier)'}</span>
               </div>
               <div className="text-[11px] text-emerald-700">
                 Added {totalCalories} kcal & {totalProtein}g protein to today’s balance.
               </div>
+              {subscribeAtCheckout && (
+                <div className="text-[11px] text-amber-800 font-bold pt-1 border-t border-emerald-200/60 flex items-center justify-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-amber-600" />
+                  <span>NutriPass Pro Activated (S$9.90/mo)! S$0 delivery forever.</span>
+                </div>
+              )}
             </div>
 
             <button
@@ -316,20 +348,109 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
+            {/* NutriPass Subscription In-Cart Opt-in / Active Status */}
+            {subscription.tier === 'free' ? (
+              <div className={`p-3.5 rounded-2xl border transition-all ${
+                subscribeAtCheckout 
+                  ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300' 
+                  : 'bg-emerald-50/50 border-emerald-200/80 hover:bg-emerald-50'
+              }`}>
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                      <Crown className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-900">NutriPass Pro Membership</span>
+                        <span className="text-[10px] font-extrabold bg-emerald-700 text-white px-1.5 py-0.2 rounded">
+                          S$9.90/mo
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 mt-0.5">
+                        Save <strong>S$3.50 delivery fee</strong> immediately, plus get <strong>10% off meals</strong> and unlimited AI scans!
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    id="subscribe-checkout-opt"
+                    checked={subscribeAtCheckout}
+                    onChange={(e) => setSubscribeAtCheckout(e.target.checked)}
+                    className="w-4 h-4 text-emerald-700 rounded border-slate-300 focus:ring-emerald-600 mt-1 cursor-pointer"
+                  />
+                </div>
+                <div className="mt-2 text-[11px] font-bold text-emerald-800 flex items-center justify-between pt-2 border-t border-emerald-200/50">
+                  <label htmlFor="subscribe-checkout-opt" className="cursor-pointer">
+                    {subscribeAtCheckout ? '✓ NutriPass Pro Subscription Fee included' : '+ Add S$9.90/mo subscription to order'}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={onOpenSubscriptionModal}
+                    className="text-amber-800 underline hover:text-black cursor-pointer font-bold"
+                  >
+                    View All Plans
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs flex items-center justify-between text-amber-950">
+                <div className="flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold capitalize">{subscription.tier} Pass Active</span>
+                    <p className="text-[10px] text-amber-800">S$0 Free Delivery & 10% subscriber discount applied</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onOpenSubscriptionModal}
+                  className="text-[11px] font-bold text-amber-900 underline hover:text-black cursor-pointer"
+                >
+                  Manage
+                </button>
+              </div>
+            )}
+
             {/* Price Calculations */}
             <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
               <div className="flex justify-between text-slate-600">
-                <span>Subtotal</span>
+                <span>Subtotal ({cart.reduce((a, b) => a + b.quantity, 0)} items)</span>
                 <span>S${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Delivery Fee</span>
+                <span className="flex items-center gap-1.5">
+                  <span>Delivery Fee</span>
+                  {isSubscriber && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                      NutriPass S$0
+                    </span>
+                  )}
+                </span>
                 <span>{deliveryFee === 0 ? 'FREE' : `S$${deliveryFee.toFixed(2)}`}</span>
               </div>
-              {discount > 0 && (
+
+              {subscribeAtCheckout && (
+                <div className="flex justify-between text-amber-950 font-bold bg-amber-100/70 px-2.5 py-1.5 rounded-xl border border-amber-200">
+                  <span className="flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-600" />
+                    <span>NutriPass Pro Subscription Fee</span>
+                  </span>
+                  <span>+S$9.90</span>
+                </div>
+              )}
+
+              {subscriberMealDiscount > 0 && (
                 <div className="flex justify-between text-emerald-700 font-semibold">
-                  <span>Healthier SG Discount</span>
-                  <span>-S${discount.toFixed(2)}</span>
+                  <span>NutriPass 10% Subscriber Meal Discount</span>
+                  <span>-S${subscriberMealDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {promoApplied && (
+                <div className="flex justify-between text-emerald-700 font-semibold">
+                  <span>Healthier SG Discount (HEALTHIERSG)</span>
+                  <span>-S$3.00</span>
                 </div>
               )}
               <div className="flex justify-between text-[11px] text-slate-400">

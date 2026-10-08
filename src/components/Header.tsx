@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   UtensilsCrossed, 
   Dumbbell, 
@@ -6,10 +5,12 @@ import {
   PieChart, 
   Bot, 
   ShoppingBag, 
-  Sparkles,
-  Flame,
-  Award
+  Sparkles, 
+  Flame, 
+  Award, 
+  Crown 
 } from 'lucide-react';
+import { UserSubscription } from '../types';
 
 interface HeaderProps {
   activeTab: 'meals' | 'activesg' | 'scanner' | 'tracker' | 'coach';
@@ -19,6 +20,8 @@ interface HeaderProps {
   caloriesIn: number;
   caloriesOut: number;
   healthpoints: number;
+  subscription: UserSubscription;
+  onOpenSubscriptionModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   caloriesIn,
   caloriesOut,
   healthpoints,
+  subscription,
+  onOpenSubscriptionModal,
 }) => {
   const netCalories = caloriesIn - caloriesOut;
 
@@ -52,15 +57,29 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-emerald-100 hidden sm:inline">HPB Healthier Choice Symbol (HCS) Compliant</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5 text-emerald-100">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs">
+            {/* NutriPass Membership Pill */}
+            <button
+              onClick={onOpenSubscriptionModal}
+              className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition cursor-pointer ${
+                subscription.tier !== 'free'
+                  ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-sm'
+                  : 'bg-emerald-700/90 hover:bg-emerald-600 text-emerald-100 border border-emerald-500/40'
+              }`}
+              title="NutriPass Membership & Subscription Fee"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-500" />
+              <span>
+                {subscription.tier !== 'free' 
+                  ? `${subscription.tier.toUpperCase()} Member · S$0 Delivery` 
+                  : 'NutriPass Pro (S$9.90/mo): S$0 Delivery'}
+              </span>
+            </button>
+
+            <div className="hidden xs:flex items-center gap-1.5 text-emerald-100 border-l border-emerald-700/60 pl-3">
               <Award className="w-3.5 h-3.5 text-amber-300" />
               <span className="font-semibold text-white">{healthpoints}</span>
-              <span className="text-emerald-200 hidden xs:inline">Healthpoints</span>
-            </div>
-            <div className="flex items-center gap-1.5 border-l border-emerald-700/60 pl-3">
-              <span className="text-emerald-300">ActiveSG ID:</span>
-              <span className="font-mono text-emerald-100 font-semibold">SG-884920</span>
+              <span className="text-emerald-200 hidden md:inline">Healthpoints</span>
             </div>
             <div className="hidden md:flex items-center gap-1.5 border-l border-emerald-700/60 pl-3">
               <span className="text-emerald-300">MCP Server:</span>
@@ -149,6 +168,28 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </div>
               </div>
+            </button>
+
+            {/* NutriPass Membership Trigger */}
+            <button
+              onClick={onOpenSubscriptionModal}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                subscription.tier !== 'free'
+                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 shadow-sm'
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-200'
+              }`}
+              title="NutriPass Club Membership and Perks"
+            >
+              <Crown className={`w-4 h-4 ${subscription.tier !== 'free' ? 'text-amber-500' : 'text-emerald-700'}`} />
+              <div className="text-left hidden sm:block">
+                <div className="text-[9px] uppercase font-bold text-slate-500 leading-none">Subscription</div>
+                <div className="text-xs font-black text-slate-900 leading-tight">
+                  {subscription.tier !== 'free' ? `${subscription.tier.toUpperCase()} Pass` : 'NutriPass S$9.90'}
+                </div>
+              </div>
+              <span className="sm:hidden text-xs">
+                {subscription.tier !== 'free' ? 'PRO' : 'Pass'}
+              </span>
             </button>
 
             {/* Cart Drawer Trigger */}
